@@ -1,4 +1,4 @@
-import { sequelize } from '../db'
+import { sequelize } from '../config/database'
 
 export const execProc = async <T>(proc: string, params: {}) : Promise<T> => {
     const data: unknown = await sequelize.query(`

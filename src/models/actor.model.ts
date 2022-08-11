@@ -1,4 +1,4 @@
-import { Table, Column, Model, PrimaryKey, Max, Length, NotNull, Default } from 'sequelize-typescript'
+import { Table, Column, Model, PrimaryKey, Max, Length, NotNull, Default, AllowNull } from 'sequelize-typescript'
 
 @Table({
     timestamps: false
@@ -9,7 +9,7 @@ export class Actor extends Model {
     id: number
 
     @Length({ min: 1, max: 45 })
-    @NotNull
+    @AllowNull(false)
     @Default("No biography written for this actor/actress, yet.")
     @Column
     name: string

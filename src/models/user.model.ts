@@ -1,4 +1,4 @@
-import { Table, Column, Model, PrimaryKey, Length, NotNull, IsEmail } from 'sequelize-typescript'
+import { Table, Column, Model, PrimaryKey, Length, NotNull, IsEmail, AllowNull, Default } from 'sequelize-typescript'
 
 @Table({
     timestamps: false
@@ -9,22 +9,23 @@ export class User extends Model {
     id: number
 
     @Length({ min: 1, max: 45 })
-    @NotNull
+    @AllowNull(false)
     @Column
     username: string
 
     @Length({ min: 1, max: 60 })
     @IsEmail
-    @NotNull
+    @AllowNull(false)
     @Column
     email: string
 
-    @NotNull
-    @Length({ min: 1, max: 45 })
+    @AllowNull(false)
+    @Length({ min: 1, max: 450 })
     @Column
     password: string
 
-    @NotNull
+    @AllowNull(false)
+    @Default(0)
     @Column
     confirmed: number
 }

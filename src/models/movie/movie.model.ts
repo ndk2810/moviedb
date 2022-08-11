@@ -1,4 +1,4 @@
-import { Table, Column, Model, PrimaryKey, Max, Length, NotNull, Default, IsDecimal } from 'sequelize-typescript'
+import { Table, Column, Model, PrimaryKey, Max, Length, NotNull, Default, IsDecimal, AllowNull } from 'sequelize-typescript'
 
 @Table({
     timestamps: false
@@ -12,7 +12,7 @@ export class Movie extends Model {
     genreId: number
 
     @Length({ min: 1, max: 75 })
-    @NotNull
+    @AllowNull(false)
     @Column
     title: string
 

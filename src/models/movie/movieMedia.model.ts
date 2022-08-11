@@ -1,4 +1,4 @@
-import { Table, Column, Model, PrimaryKey, NotNull, Default } from 'sequelize-typescript'
+import { Table, Column, Model, PrimaryKey, NotNull, Default, AllowNull } from 'sequelize-typescript'
 
 @Table({
     timestamps: false
@@ -8,11 +8,11 @@ export class MovieMedia extends Model {
     @Column
     id: number
 
-    @NotNull
+    @AllowNull(false)
     @Column
     movieId: number
 
-    @NotNull
+    @AllowNull(false)
     @Column
     url: string
 

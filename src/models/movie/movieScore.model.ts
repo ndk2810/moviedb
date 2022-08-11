@@ -1,4 +1,4 @@
-import { Table, Column, Model, PrimaryKey, NotNull, IsDecimal } from 'sequelize-typescript'
+import { Table, Column, Model, PrimaryKey, NotNull, IsDecimal, AllowNull } from 'sequelize-typescript'
 
 @Table({
     timestamps: false
@@ -8,11 +8,11 @@ export class MovieScore extends Model {
     @Column
     id: number
 
-    @NotNull
+    @AllowNull(false)
     @Column
     movieId: number
 
-    @NotNull
+    @AllowNull(false)
     @Column
     userId: number
 
