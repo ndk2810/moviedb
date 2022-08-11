@@ -1,6 +1,6 @@
-## TheMovieDB API
+# TheMovieDB API
 
-# 1. Authentication
+## 1. Authentication
     1. Login: 
         1. Username
         2. Password (min 6 chars)
@@ -12,7 +12,7 @@
     3. Reset Password:
         1. Email
         
-# 2. Movie
+## 2. Movie
     1. CRUD Movie Details By ID:
         1. Info:
             1. Title
@@ -27,5 +27,5 @@
     3. Search Movie (By: Name, Actor)
     4. User rating score for movie
     
-# 3. Actors
+## 3. Actors
     1. CRUD Actor: Name, Bio, Gender, Profile Image, List Movies (Acting)
