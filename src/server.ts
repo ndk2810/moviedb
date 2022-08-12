@@ -9,15 +9,15 @@ import { Constants } from './config/constants';
 
 dotenv.config()
 
-
 // BullMQ and bull-board setup
-const myQueue = new Queue('confirm-mail', Constants.REDIS_CONNECTION)
+const confirmMailQ = new Queue('confirm-mail', Constants.REDIS_CONNECTION)
+const resetMailQ = new Queue('reset-mail', Constants.REDIS_CONNECTION)
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
 const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
-    queues: [new BullMQAdapter(myQueue)],
+    queues: [new BullMQAdapter(confirmMailQ), new BullMQAdapter(resetMailQ)],
     serverAdapter: serverAdapter,
 });
 

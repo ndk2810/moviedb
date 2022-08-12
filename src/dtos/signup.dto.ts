@@ -1,8 +1,9 @@
-import { IsNotEmpty, MaxLength, IsEmail } from "class-validator";
+import { IsNotEmpty, MaxLength, IsEmail, MinLength } from "class-validator";
 
 export class SignUpDTO {
     @IsNotEmpty({ message: "Missing email" })
     @IsEmail()
+    @MinLength(5)
     @MaxLength(60)
     email: string;
 
@@ -12,5 +13,6 @@ export class SignUpDTO {
 
     @IsNotEmpty({ message: "Missing password" })
     @MaxLength(45)
+    @MinLength(6)
     password: string;
 }

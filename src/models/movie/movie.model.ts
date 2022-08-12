@@ -7,11 +7,8 @@ export class Movie extends Model {
     @PrimaryKey
     @Column
     id: number
-    
-    @Column
-    genreId: number
 
-    @Length({ min: 1, max: 75 })
+    @Length({ max: 75 })
     @AllowNull(false)
     @Column
     title: string
@@ -19,6 +16,10 @@ export class Movie extends Model {
     @Default("No overview available")
     @Column
     overview: string
+
+    @Length({ max: 45 })
+    @Column
+    poster: string
 
     @Max(10.0)
     @Default(0.0)

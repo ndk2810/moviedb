@@ -13,14 +13,14 @@ export class User extends Model {
     @Column
     username: string
 
-    @Length({ min: 1, max: 60 })
+    @Length({ min: 5, max: 60 })
     @IsEmail
     @AllowNull(false)
     @Column
     email: string
 
     @AllowNull(false)
-    @Length({ min: 1, max: 450 })
+    @Length({ min: 6, max: 450 })
     @Column
     password: string
 
