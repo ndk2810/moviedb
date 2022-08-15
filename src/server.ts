@@ -39,7 +39,7 @@ app.use(router)
 //  Error handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     if (err) {
-        return res.json(new ResponseWrapper(
+        return res.status(500).send(new ResponseWrapper(
             null,
             {
                 status: res.locals.status ? res.locals.status : "err.unhandledException",

@@ -1,10 +1,11 @@
-import { Table, Column, Model, PrimaryKey, NotNull, IsDecimal, AllowNull } from 'sequelize-typescript'
+import { Table, Column, Model, PrimaryKey, NotNull, IsDecimal, AllowNull, AutoIncrement } from 'sequelize-typescript'
 
 @Table({
     timestamps: false
 })
 export class MovieScore extends Model {
     @PrimaryKey
+    @AutoIncrement
     @Column
     id: number
 

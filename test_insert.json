@@ -1,0 +1,18 @@
+[
+    {
+        "actorId": 1,
+        "role": "Tony Stark"
+    },
+    {
+        "actorId": 2,
+        "role": "Mickey Mouse"
+    },
+    {
+        "actorId": 3,
+        "role": "Captain America"
+    },
+    {
+        "actorId": 4,
+        "role": "Spider-Man"
+    }
+]

@@ -1,10 +1,11 @@
-import { Table, Column, Model, PrimaryKey, Length, NotNull, IsEmail, AllowNull, Default } from 'sequelize-typescript'
+import { Table, Column, Model, PrimaryKey, Length, NotNull, IsEmail, AllowNull, Default, AutoIncrement } from 'sequelize-typescript'
 
 @Table({
     timestamps: false
 })
 export class User extends Model {
     @PrimaryKey
+    @AutoIncrement
     @Column
     id: number
 

@@ -4,8 +4,14 @@ export class Pagination {
     total: number
 
     constructor(limit: number, page: number, total: number) {
-        this.limit = 1
-        this.page = 1
-        this.total = 1
+        this.limit = limit
+        this.page = page
+        this.total = total
     }
+}
+
+export const paginate = (total: number, limit: number, offset: number): Pagination => {
+    const page = offset < 1 ? 1 : Math.ceil(offset / limit)
+
+    return new Pagination(limit, page, total)
 }

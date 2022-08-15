@@ -1,10 +1,11 @@
-import { Table, Column, Model, PrimaryKey, Length, NotNull, AllowNull } from 'sequelize-typescript'
+import { Table, Column, Model, PrimaryKey, Length, NotNull, AllowNull, AutoIncrement } from 'sequelize-typescript'
 
 @Table({
     timestamps: false
 })
 export class Genre extends Model {
     @PrimaryKey
+    @AutoIncrement
     @Column
     id: number
 

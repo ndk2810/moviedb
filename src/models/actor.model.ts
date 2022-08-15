@@ -1,10 +1,11 @@
-import { Table, Column, Model, PrimaryKey, Max, Length, NotNull, Default, AllowNull } from 'sequelize-typescript'
+import { Table, Column, Model, PrimaryKey, Max, Length, NotNull, Default, AllowNull, AutoIncrement } from 'sequelize-typescript'
 
 @Table({
     timestamps: false
 })
 export class Actor extends Model {
     @PrimaryKey
+    @AutoIncrement
     @Column
     id: number
 
