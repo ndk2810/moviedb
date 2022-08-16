@@ -33,7 +33,7 @@ import { connect } from './config/database'
 connect()
 
 //  Route handler
-import router from './routes/index'
+import router from './routes/index.route'
 app.use(router)
 
 //  Error handler

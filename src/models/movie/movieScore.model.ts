@@ -1,7 +1,8 @@
 import { Table, Column, Model, PrimaryKey, NotNull, IsDecimal, AllowNull, AutoIncrement } from 'sequelize-typescript'
 
 @Table({
-    timestamps: false
+    timestamps: false,
+    tableName: "moviescores"
 })
 export class MovieScore extends Model {
     @PrimaryKey
@@ -17,6 +18,7 @@ export class MovieScore extends Model {
     @Column
     userId: number
 
+    @AllowNull(false)
     @IsDecimal
     @Column
     score: number
