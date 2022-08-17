@@ -20,3 +20,21 @@ export const getActor: RequestHandler = async (req, res, next) => {
         next(error)
     }
 }
+
+export const addActor: RequestHandler = async (req, res, next) => {
+    try {
+        const actor = await Actor.create({
+            name: req.body.name,
+            bio: req.body.bio,
+            gender: req.body.gender,
+            profilePic: req.file.filename
+        })
+
+        return res.send(new ResponseWrapper(
+            actor, null, null
+        ))
+
+    } catch (error: any) {
+        next(error)
+    }
+}

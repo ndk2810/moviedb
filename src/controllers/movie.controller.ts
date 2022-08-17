@@ -1,4 +1,5 @@
 import { RequestHandler } from "express"
+import { Constants } from "../config/constants"
 import { sequelize } from "../config/database"
 import { paginate } from "../helpers/wrappers/pagination"
 import { ResponseWrapper } from "../helpers/wrappers/responseWrapper"
@@ -19,6 +20,14 @@ export const getMovie: RequestHandler = async (req, res, next) => {
             MovieGenre.findAll({ where: { movieId: id } })
         ])
 
+        if (!movie)
+            throw "Movie doesn't exist"
+
+        movieMedias.forEach(media => {
+            media.url = Constants.ASSETS + media.url
+        })
+        movie.poster = Constants.ASSETS + 'posters/' + movie.poster
+
         return res.send(new ResponseWrapper(
             { movie, movieActors, movieMedias, movieGenres }, null, null
         ))
@@ -33,13 +42,14 @@ export const addMovie: RequestHandler = async (req, res, next) => {
         const movie: Movie = await Movie.create({
             title: req.body.title,
             overview: req.body.overview,
-            poster: req.body.poster || "joker.jpg",
+            poster: req.file.filename || "joker.jpg",
         })
 
         let movieActors, movieGenres
 
         if (req.body.movieactors) {
-            const cast = req.body.movieactors.map((movieActor: { actorId: number; role: string }) => {
+            const movieCast = JSON.parse(req.body.movieactors)
+            const cast = movieCast.map((movieActor: { actorId: number; role: string }) => {
                 return {
                     movieId: movie.id,
                     actorId: movieActor.actorId,
@@ -51,7 +61,8 @@ export const addMovie: RequestHandler = async (req, res, next) => {
         }
 
         if (req.body.moviegenres) {
-            const genre = req.body.moviegenres.map((movieGenre: { genreId: number }) => {
+            const jsonMoviegenres = JSON.parse(req.body.moviegenres)
+            const genre = jsonMoviegenres.map((movieGenre: { genreId: number }) => {
                 return {
                     movieId: movie.id,
                     genreId: movieGenre.genreId
@@ -72,18 +83,38 @@ export const addMovie: RequestHandler = async (req, res, next) => {
 
 export const updateMovie: RequestHandler = async (req, res, next) => {
     try {
-        const movieId = req.body.id
+        const movie = await Movie.findOne({
+            where: { id: req.body.id }
+        })
 
-        const updatedMovie = Movie.update(
-            {
-                title: req.body.title,
-                overview: req.body.overview,
-                poster: req.body.poster
-            },
-            { where: { id: movieId } })
+        await movie.update({
+            title: req.body.title,
+            overview: req.body.overview,
+        })
 
         return res.send(new ResponseWrapper(
-            "Movie updated", null, null
+            "Movie info updated", null, null
+        ))
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const updateMoviePoster: RequestHandler = async (req, res, next) => {
+    try {
+        if(req.file === null)
+            throw "No picture found"
+            
+        const movie = await Movie.findOne({
+            where: { id: req.body.id }
+        })
+
+        await movie.update({
+            poster: req.file.filename
+        })
+
+        return res.send(new ResponseWrapper(
+            "Poster changed", null, null
         ))
     } catch (error) {
         next(error)
@@ -128,17 +159,48 @@ export const rateMovie: RequestHandler = async (req, res, next) => {
 }
 
 export const searchMovie: RequestHandler = async (req, res, next) => {
-    const { q, category } = req.query
-    let limit: number = parseInt(req.query.limit as string) || 10
-    let offset: number = parseInt(req.query.offset as string) || 0
+    try {
+        const { q, category } = req.query
+        let limit: number = parseInt(req.query.limit as string) || 10
+        let offset: number = parseInt(req.query.offset as string) || 0
 
-    const results = await sequelize.query(
-        `SELECT * FROM movies WHERE title LIKE '%${q}%' LIMIT ${limit} OFFSET ${offset}`
-    );      
+        const results = await sequelize.query(
+            `SELECT * FROM movies WHERE title LIKE '%${q}%' LIMIT ${limit} OFFSET ${offset}`
+        );
 
-    return res.send(new ResponseWrapper(
-        results, null, paginate(results.length, limit, offset)
-    ))
+        return res.send(new ResponseWrapper(
+            results, null, paginate(results[0].length, limit, offset)
+        ))
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const addMedia: RequestHandler = async (req, res, next) => {
+    try {
+        if(!req.body.movieId)
+            throw "Missing movie id"
+
+        const files = req.files as Array<any>
+        const id = req.body.movieId
+        
+        const medias = files.map(file => {
+            return {
+                movieId: id,
+                url: file.filename
+            }
+        })
+
+        await MovieMedia.bulkCreate(medias)
+
+        return res.send(new ResponseWrapper(
+            "Inserted medias to movie", null, null
+        ))
+
+    } catch (error) {
+        next(error)
+    }
 }
 
 export const getList: RequestHandler = async (req, res, next) => {
