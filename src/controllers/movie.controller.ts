@@ -1,8 +1,11 @@
 import { RequestHandler } from "express"
+import { QueryTypes, Sequelize } from "sequelize"
 import { Constants } from "../config/constants"
 import { sequelize } from "../config/database"
+import { execProc } from "../helpers/procedure"
 import { paginate } from "../helpers/wrappers/pagination"
 import { ResponseWrapper } from "../helpers/wrappers/responseWrapper"
+import { Actor } from "../models/actor.model"
 import { Movie } from "../models/movie/movie.model"
 import { MovieActor } from "../models/movie/movieActor.model"
 import { MovieGenre } from "../models/movie/movieGenre.model"
@@ -13,11 +16,12 @@ export const getMovie: RequestHandler = async (req, res, next) => {
     try {
         const id = req.params.id
 
-        const [movie, movieActors, movieMedias, movieGenres] = await Promise.all([
+        const [updateScore, movie, movieActors, movieMedias, movieGenres] = await Promise.all([
+            execProc("updateScore(:movieId)", { movieId: id }),
             Movie.findOne({ where: { id: id } }),
             MovieActor.findAll({ where: { movieId: id } }),
             MovieMedia.findAll({ where: { movieId: id } }),
-            MovieGenre.findAll({ where: { movieId: id } })
+            MovieGenre.findAll({ where: { movieId: id } }),
         ])
 
         if (!movie)
@@ -102,9 +106,9 @@ export const updateMovie: RequestHandler = async (req, res, next) => {
 
 export const updateMoviePoster: RequestHandler = async (req, res, next) => {
     try {
-        if(req.file === null)
+        if (req.file === null)
             throw "No picture found"
-            
+
         const movie = await Movie.findOne({
             where: { id: req.body.id }
         })
@@ -125,7 +129,13 @@ export const deleteMovie: RequestHandler = async (req, res, next) => {
     try {
         const movieId = req.body.id
 
-        await Movie.destroy({ where: { id: movieId } })
+        await Promise.all([
+            Movie.destroy({ where: { id: movieId } }),
+            MovieActor.destroy({ where: { movieId: movieId } }),
+            MovieGenre.destroy({ where: { movieId: movieId } }),
+            MovieMedia.destroy({ where: { movieId: movieId } }),
+            MovieScore.destroy({ where: { movieId: movieId } })
+        ])
 
         return res.send(new ResponseWrapper(
             "Movie deleted", null, null
@@ -135,32 +145,9 @@ export const deleteMovie: RequestHandler = async (req, res, next) => {
     }
 }
 
-export const rateMovie: RequestHandler = async (req, res, next) => {
-    try {
-        const check = await MovieScore.findOne({
-            where: { userId: req.body.userId, movieId: req.body.movieId }
-        })
-
-        if (check)
-            throw "User already rated this movie"
-
-        const rateMovie = await MovieScore.create({
-            userId: req.body.userId,
-            movieId: req.body.movieId,
-            score: req.body.score
-        })
-
-        return res.send(new ResponseWrapper(
-            rateMovie, null, null
-        ))
-    } catch (error) {
-        next(error)
-    }
-}
-
 export const searchMovie: RequestHandler = async (req, res, next) => {
     try {
-        const { q, category } = req.query
+        const q = req.query.q
         let limit: number = parseInt(req.query.limit as string) || 10
         let offset: number = parseInt(req.query.offset as string) || 0
 
@@ -177,14 +164,49 @@ export const searchMovie: RequestHandler = async (req, res, next) => {
     }
 }
 
+export const searchMovieByActor: RequestHandler = async (req, res, next) => {
+    try {
+        const actor = req.query.q
+        let limit: number = parseInt(req.query.limit as string) || 10
+        let offset: number = parseInt(req.query.offset as string) || 0
+
+        const ids: Actor[] = await sequelize.query(
+            `SELECT id FROM actors WHERE name LIKE '%${actor}%'`,
+            { type: QueryTypes.SELECT }
+        );
+
+        const actorIds = ids.map(obj => obj.id)
+
+        const movieIdsObj = await MovieActor.findAll({
+            where: Sequelize.or(
+                { actorId: actorIds }
+            ),
+            attributes: ['movieId']
+        })
+
+        const movieIds = movieIdsObj.map(obj => obj.movieId)
+
+        const movies = await Movie.findAll({
+            where: Sequelize.or({ id: movieIds })
+        })
+
+        return res.send(new ResponseWrapper(
+            movies, null, null
+        ))
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 export const addMedia: RequestHandler = async (req, res, next) => {
     try {
-        if(!req.body.movieId)
+        if (!req.body.movieId)
             throw "Missing movie id"
 
         const files = req.files as Array<any>
         const id = req.body.movieId
-        
+
         const medias = files.map(file => {
             return {
                 movieId: id,
@@ -219,6 +241,47 @@ export const getList: RequestHandler = async (req, res, next) => {
             mostViewedList,
             null,
             paginate(mostViewedList.count, limit, offset)
+        ))
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const addMovieGenre: RequestHandler = async (req, res, next) => {
+    try {
+        const { movieId, genreId } = req.body
+        const checkGenre = await MovieGenre.findOne({
+            where: { movieId: movieId, genreId: genreId }
+        })
+
+        if (checkGenre)
+            throw "Genre already assigned to movie"
+
+        const addMovieGenre = await MovieGenre.create({
+            movieId: movieId,
+            genreId: genreId,
+        })
+
+        return res.send(new ResponseWrapper(
+            addMovieGenre, null, null
+        ))
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const deleteMovieGenre: RequestHandler = async (req, res, next) => {
+    try {
+        const id = req.body.id
+
+        await MovieGenre.destroy({
+            where: { id: id }
+        })
+
+        return res.send(new ResponseWrapper(
+            "Genre removed from movie", null, null
         ))
 
     } catch (error) {

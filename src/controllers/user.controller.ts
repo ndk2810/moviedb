@@ -9,6 +9,7 @@ import { plainToInstance } from "class-transformer"
 import { Queue, Worker } from 'bullmq'
 import { Constants } from "../config/constants"
 import { sendEmail } from "../helpers/email"
+import { MovieScore } from "../models/movie/movieScore.model"
 
 export const signUp: RequestHandler = async (req, res, next) => {
     try {
@@ -129,6 +130,49 @@ export const resetPassword: RequestHandler = async (req, res, next) => {
             "Update successful", null, null
         ))
 
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const rateMovie: RequestHandler = async (req, res, next) => {
+    try {
+        const check = await MovieScore.findOne({
+            where: { userId: req.body.userId, movieId: req.body.movieId }
+        })
+
+        if (check)
+            throw "Movie already rated by user"
+
+        const rateMovie = await MovieScore.create({
+            userId: req.body.userId,
+            movieId: req.body.movieId,
+            score: req.body.score
+        })
+
+        return res.send(new ResponseWrapper(
+            rateMovie, null, null
+        ))
+    } catch (error) {
+        next(error)
+    }
+}
+
+
+export const deleteRating: RequestHandler = async (req, res, next) => {
+    try {
+        const check = await MovieScore.findOne({
+            where: { userId: req.body.userId, movieId: req.body.movieId }
+        })
+
+        if (!check)
+            throw "Can't delete something that doesn't exists mate :v"
+
+        await check.destroy()
+
+        return res.send(new ResponseWrapper(
+            "Rating deleted", null, null
+        ))
     } catch (error) {
         next(error)
     }

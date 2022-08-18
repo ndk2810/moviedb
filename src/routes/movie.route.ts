@@ -6,7 +6,9 @@ const router = Router()
 const posterUpload = multer({ storage: Constants.POSTER_STORAGE })
 const upload = multer({ storage: Constants.MEDIA_STORAGE })
 
-import { addMedia, addMovie, deleteMovie, getList, getMovie, rateMovie, searchMovie, updateMovie, updateMoviePoster } from "../controllers/movie.controller";
+import { addMedia, addMovie, addMovieGenre, deleteMovie, deleteMovieGenre, getList, getMovie, searchMovie, 
+    searchMovieByActor, updateMovie, updateMoviePoster } 
+    from "../controllers/movie.controller";
 import { authorizeToken } from "../helpers/token";
 
 router.get('/getList', getList)
@@ -15,8 +17,10 @@ router.patch('/update', updateMovie)
 router.patch('/updatePoster', posterUpload.single('poster'), updateMoviePoster)
 router.post('/addMedia', upload.array('media'), addMedia)
 router.delete('/delete', deleteMovie)
-router.post('/rate', rateMovie)
+router.delete('/deleteGenre', deleteMovieGenre),
+router.post('addGenre', addMovieGenre)
 router.get('/search', searchMovie)
+router.get('/searchByActor', searchMovieByActor)
 
 router.get('/details/:id', getMovie)
 
