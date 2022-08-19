@@ -1,4 +1,4 @@
-import { Table, Column, Model, PrimaryKey, Length, NotNull, IsEmail, AllowNull, Default, AutoIncrement } from 'sequelize-typescript'
+import { Table, Column, Model, PrimaryKey, Length, IsEmail, AllowNull, Default, AutoIncrement } from 'sequelize-typescript'
 
 @Table({
     timestamps: false

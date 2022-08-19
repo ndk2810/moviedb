@@ -3,6 +3,7 @@ import { QueryTypes, Sequelize } from "sequelize"
 import { Constants } from "../config/constants"
 import { sequelize } from "../config/database"
 import { execProc } from "../helpers/procedure"
+import { Errors } from "../helpers/wrappers/errorWrapper"
 import { paginate } from "../helpers/wrappers/pagination"
 import { ResponseWrapper } from "../helpers/wrappers/responseWrapper"
 import { Actor } from "../models/actor.model"
@@ -15,6 +16,9 @@ import { MovieScore } from "../models/movie/movieScore.model"
 export const getMovie: RequestHandler = async (req, res, next) => {
     try {
         const id = req.params.id
+
+        if (!id)
+            throw Errors.MISSING_ID
 
         const [updateScore, movie, movieActors, movieMedias, movieGenres] = await Promise.all([
             execProc("updateScore(:movieId)", { movieId: id }),
@@ -43,6 +47,9 @@ export const getMovie: RequestHandler = async (req, res, next) => {
 
 export const addMovie: RequestHandler = async (req, res, next) => {
     try {
+        
+        if(!req.body.title || !req.body.overview || !req.file)
+            throw Errors.MISSING_PROPERTIES
         const movie: Movie = await Movie.create({
             title: req.body.title,
             overview: req.body.overview,
@@ -87,6 +94,9 @@ export const addMovie: RequestHandler = async (req, res, next) => {
 
 export const updateMovie: RequestHandler = async (req, res, next) => {
     try {
+        if (!req.body.id)
+            throw Errors.MISSING_ID
+
         const movie = await Movie.findOne({
             where: { id: req.body.id }
         })
@@ -107,7 +117,7 @@ export const updateMovie: RequestHandler = async (req, res, next) => {
 export const updateMoviePoster: RequestHandler = async (req, res, next) => {
     try {
         if (req.file === null)
-            throw "No picture found"
+            throw Errors.MISSING_FILE
 
         const movie = await Movie.findOne({
             where: { id: req.body.id }
@@ -128,6 +138,9 @@ export const updateMoviePoster: RequestHandler = async (req, res, next) => {
 export const deleteMovie: RequestHandler = async (req, res, next) => {
     try {
         const movieId = req.body.id
+
+        if (!movieId)
+            throw Errors.MISSING_ID
 
         await Promise.all([
             Movie.destroy({ where: { id: movieId } }),
@@ -151,6 +164,9 @@ export const searchMovie: RequestHandler = async (req, res, next) => {
         let limit: number = parseInt(req.query.limit as string) || 10
         let offset: number = parseInt(req.query.offset as string) || 0
 
+        if (!q)
+            throw Errors.BLANK
+
         const results = await sequelize.query(
             `SELECT * FROM movies WHERE title LIKE '%${q}%' LIMIT ${limit} OFFSET ${offset}`
         );
@@ -170,6 +186,9 @@ export const searchMovieByActor: RequestHandler = async (req, res, next) => {
         let limit: number = parseInt(req.query.limit as string) || 10
         let offset: number = parseInt(req.query.offset as string) || 0
 
+        if (!actor)
+            throw Errors.BLANK
+
         const ids: Actor[] = await sequelize.query(
             `SELECT id FROM actors WHERE name LIKE '%${actor}%'`,
             { type: QueryTypes.SELECT }
@@ -187,11 +206,13 @@ export const searchMovieByActor: RequestHandler = async (req, res, next) => {
         const movieIds = movieIdsObj.map(obj => obj.movieId)
 
         const movies = await Movie.findAll({
-            where: Sequelize.or({ id: movieIds })
+            where: Sequelize.or({ id: movieIds }),
+            limit: limit,
+            offset: offset
         })
 
         return res.send(new ResponseWrapper(
-            movies, null, null
+            movies, null, paginate(movies.length, limit, offset)
         ))
 
     } catch (error) {
@@ -202,7 +223,7 @@ export const searchMovieByActor: RequestHandler = async (req, res, next) => {
 export const addMedia: RequestHandler = async (req, res, next) => {
     try {
         if (!req.body.movieId)
-            throw "Missing movie id"
+            throw Errors.MISSING_ID
 
         const files = req.files as Array<any>
         const id = req.body.movieId
@@ -251,12 +272,16 @@ export const getList: RequestHandler = async (req, res, next) => {
 export const addMovieGenre: RequestHandler = async (req, res, next) => {
     try {
         const { movieId, genreId } = req.body
+
+        if (!movieId || !genreId)
+            throw Errors.MISSING_ID
+
         const checkGenre = await MovieGenre.findOne({
             where: { movieId: movieId, genreId: genreId }
         })
 
         if (checkGenre)
-            throw "Genre already assigned to movie"
+            throw Errors.ALREADY_GENRED
 
         const addMovieGenre = await MovieGenre.create({
             movieId: movieId,
@@ -275,6 +300,9 @@ export const addMovieGenre: RequestHandler = async (req, res, next) => {
 export const deleteMovieGenre: RequestHandler = async (req, res, next) => {
     try {
         const id = req.body.id
+
+        if (!id)
+            throw Errors.MISSING_ID
 
         await MovieGenre.destroy({
             where: { id: id }

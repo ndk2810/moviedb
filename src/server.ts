@@ -9,7 +9,6 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { Constants } from './config/constants';
 import path from 'path';
 
-
 // BullMQ and bull-board setup
 const confirmMailQ = new Queue('confirm-mail', Constants.REDIS_CONNECTION)
 const resetMailQ = new Queue('reset-mail', Constants.REDIS_CONNECTION)
@@ -37,20 +36,26 @@ connect()
 
 //  Route handler
 import router from './routes/index.route'
+import { ErrorWrapper } from './helpers/wrappers/errorWrapper'
 app.use(router)
 
 //  Error handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     if (err) {
-        return res.status(500).send(new ResponseWrapper(
-            null,
-            {
-                status: res.locals.status ? res.locals.status : "err.unhandledException",
+        if (err instanceof ErrorWrapper) {
+            return res.status(err.code).send(new ResponseWrapper(
+                null, err, null
+            ))
+        }
+        return res.status(500).send({
+            data: null,
+            error: {
+                message: err.message || err,
                 code: 500,
-                message: err
-            },
-            null
-        ))
+                status: "err.unhandledException"
+            }, 
+            pagination: null
+        })
     }
 })
 

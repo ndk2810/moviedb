@@ -1,5 +1,6 @@
 import { RequestHandler } from "express"
 import { Constants } from "../config/constants"
+import { Errors } from "../helpers/wrappers/errorWrapper"
 import { ResponseWrapper } from "../helpers/wrappers/responseWrapper"
 import { Actor } from "../models/actor.model"
 import { MovieActor } from "../models/movie/movieActor.model"
@@ -7,6 +8,9 @@ import { MovieActor } from "../models/movie/movieActor.model"
 export const getActor: RequestHandler = async (req, res, next) => {
     try {
         const id = req.params.id
+        
+        if(!id)
+            throw Errors.MISSING_ID
 
         const [actor, listMovies] = await Promise.all([
             Actor.findOne({ where: { id: id } }),
@@ -47,6 +51,9 @@ export const addActor: RequestHandler = async (req, res, next) => {
 
 export const updateActor: RequestHandler = async (req, res, next) => {
     try {
+        if(!req.body.id)
+            throw Errors.MISSING_ID
+
         const actor = await Actor.findOne({
             where: { id: req.body.id }
         })
@@ -69,7 +76,10 @@ export const updateActor: RequestHandler = async (req, res, next) => {
 export const updateActorPic: RequestHandler = async (req, res, next) => {
     try {
         if (req.file === null)
-            throw "No picture found"
+            throw Errors.MISSING_FILE
+      
+        if(!req.body.id)
+            throw Errors.MISSING_ID
 
         const actor = await Actor.findOne({
             where: { id: req.body.id }
@@ -90,6 +100,10 @@ export const updateActorPic: RequestHandler = async (req, res, next) => {
 export const addRole: RequestHandler = async (req, res, next) => {
     try {
         const { movieId, actorId, role } = req.body
+        
+        if(!movieId || !actorId)
+            throw Errors.MISSING_ID
+
         const checkRole = await MovieActor.findOne({
             where: { movieId: movieId, actorId: actorId }
         })
@@ -115,6 +129,9 @@ export const addRole: RequestHandler = async (req, res, next) => {
 export const deleteRole: RequestHandler = async (req, res, next) => {
     try {
         const id = req.body.id
+
+        if(!id)
+            throw Errors.MISSING_ID
 
         await MovieActor.destroy({
             where: { id: id }

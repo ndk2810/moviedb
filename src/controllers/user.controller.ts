@@ -1,5 +1,6 @@
 import { RequestHandler } from "express"
-import { signToken } from "../helpers/token"
+import { IJwtPayload, signToken } from "../helpers/token"
+import jwt from 'jsonwebtoken'
 import { encryptPassword, comparePassword } from "../helpers/password"
 import { User } from "../models/user.model"
 import { ResponseWrapper } from "../helpers/wrappers/responseWrapper"
@@ -10,9 +11,13 @@ import { Queue, Worker } from 'bullmq'
 import { Constants } from "../config/constants"
 import { sendEmail } from "../helpers/email"
 import { MovieScore } from "../models/movie/movieScore.model"
+import { Errors } from "../helpers/wrappers/errorWrapper"
 
 export const signUp: RequestHandler = async (req, res, next) => {
     try {
+        if (!req.body.email || !req.body.username || !req.body.password)
+            throw Errors.MISSING_PROPERTIES
+
         const data = {
             email: req.body.email,
             username: req.body.username,
@@ -28,12 +33,13 @@ export const signUp: RequestHandler = async (req, res, next) => {
         const savedUser = await user.save()
 
         const confirmMailQ = new Queue('confirm-mail', Constants.REDIS_CONNECTION);
+        const confirmToken = jwt.sign({ _id: savedUser.id.toString() }, process.env.ACCESS_TOKEN_SECRET)
 
         const msg = {
             to: user.email,
             from: process.env.SENDGRID_EMAIL,
             subject: 'Sign up confirmation - TheMovieDB API',
-            text: 'Click this link to confirm your email: http://localhost:3000/user/confirm?id=' + savedUser.id,
+            text: 'Click this link to confirm your email: http://localhost:3000/user/confirm?id=' + confirmToken,
         }
 
         await confirmMailQ.add('send-mail', await sendEmail(msg), {
@@ -54,6 +60,27 @@ export const signUp: RequestHandler = async (req, res, next) => {
     }
 }
 
+export const confirmAccount: RequestHandler = async (req, res, next) => {
+    const token = req.query.id as string
+
+    const payload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET) as IJwtPayload
+
+    const user = await User.findOne({
+        where: { id: payload._id }
+    })
+
+    if(!user)
+        throw Errors.NO_ACCOUNT
+
+    await user.update({
+        confirmed: 1
+    })
+
+    return res.send(new ResponseWrapper(
+        "Account confirmed", null, null
+    ))
+}
+
 export const signIn: RequestHandler = async (req, res, next) => {
     try {
         const user = await User.findOne({
@@ -63,12 +90,12 @@ export const signIn: RequestHandler = async (req, res, next) => {
         })
 
         if (!user)
-            throw "Username doesn't exists"
+            throw Errors.NO_ACCOUNT
 
         const checkPassword: boolean = await comparePassword(req.body.password, user.password)
 
         if (!checkPassword)
-            throw "Incorrect password"
+            throw Errors.WRONG_PASSWORD
 
         const token: string = signToken(user.id.toString())
 
@@ -86,7 +113,7 @@ export const forgotPassword: RequestHandler = async (req, res, next) => {
         })
 
         if (!user)
-            throw "No account with that email found !"
+            throw Errors.NO_ACCOUNT
 
         const resetMailQ = new Queue('reset-mail', Constants.REDIS_CONNECTION);
 
@@ -115,19 +142,22 @@ export const forgotPassword: RequestHandler = async (req, res, next) => {
 
 export const resetPassword: RequestHandler = async (req, res, next) => {
     try {
+        if(!req.body.password || req.body.id)
+            throw Errors.MISSING_PROPERTIES
+
         const user = await User.findOne({
             where: { id: req.body.id }
         })
 
         if (!user)
-            throw "No account with that id found !"
+            throw Errors.NO_ACCOUNT
 
         const newPassword = await encryptPassword(req.body.password)
 
         await user.update({ password: newPassword })
 
         return res.send(new ResponseWrapper(
-            "Update successful", null, null
+            "Password updated", null, null
         ))
 
     } catch (error) {
@@ -137,12 +167,15 @@ export const resetPassword: RequestHandler = async (req, res, next) => {
 
 export const rateMovie: RequestHandler = async (req, res, next) => {
     try {
+        if (!req.body.userId || !req.body.movieId)
+            throw Errors.MISSING_ID
+
         const check = await MovieScore.findOne({
             where: { userId: req.body.userId, movieId: req.body.movieId }
         })
 
         if (check)
-            throw "Movie already rated by user"
+            throw Errors.ALREADY_RATED
 
         const rateMovie = await MovieScore.create({
             userId: req.body.userId,
@@ -166,7 +199,7 @@ export const deleteRating: RequestHandler = async (req, res, next) => {
         })
 
         if (!check)
-            throw "Can't delete something that doesn't exists mate :v"
+            throw Errors.NO_RESOURCE
 
         await check.destroy()
 
