@@ -86,7 +86,7 @@ export const updateActorPic: RequestHandler = async (req, res, next) => {
         })
 
         await actor.update({
-            poster: req.file.filename
+            profilePic: req.file.filename
         })
 
         return res.send(new ResponseWrapper(

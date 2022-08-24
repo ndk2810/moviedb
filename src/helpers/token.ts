@@ -13,7 +13,7 @@ export interface IJwtPayload extends JwtPayload {
 export const signToken = (userID: string): string => {
     const token = jwt.sign({ _id: userID }, process.env.ACCESS_TOKEN_SECRET)
 
-    redisClient.setEx(`token:${userID}`, 75, token)
+    redisClient.setEx(`token:${userID}`, 60 * 60, token)
 
     return token
 }

@@ -167,12 +167,17 @@ export const searchMovie: RequestHandler = async (req, res, next) => {
         if (!q)
             throw Errors.BLANK
 
-        const results = await sequelize.query(
-            `SELECT * FROM movies WHERE title LIKE '%${q}%' LIMIT ${limit} OFFSET ${offset}`
+        const results: Movie[] = await sequelize.query(
+            `SELECT * FROM movies WHERE title LIKE '%${q}%' LIMIT ${limit} OFFSET ${offset}`,
+            { type: QueryTypes.SELECT }
         );
 
+        results.forEach(movie => {
+            movie.poster = Constants.ASSETS + 'posters/' + movie.poster
+        })
+
         return res.send(new ResponseWrapper(
-            results, null, paginate(results[0].length, limit, offset)
+            results, null, paginate(results.length, limit, offset)
         ))
 
     } catch (error) {

@@ -9,11 +9,11 @@ import { authorizeToken } from "../helpers/token";
 
 const router = Router()
 
-router.post('/add', actorUpload.single('profilePic'), addActor)
-router.patch('/update', updateActor)
-router.patch('/updatePic', updateActorPic)
-router.delete('/deleteRole', deleteRole),
-router.post('addRole', addRole)
+router.post('/add', authorizeToken, actorUpload.single('profilePic'), addActor)
+router.patch('/update', authorizeToken, updateActor)
+router.patch('/updatePic', authorizeToken, updateActorPic)
+router.delete('/deleteRole', authorizeToken, deleteRole),
+router.post('addRole', authorizeToken, addRole)
 router.get('/details/:id', getActor)
 
 export default router

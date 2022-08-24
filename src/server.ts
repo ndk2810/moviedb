@@ -47,15 +47,13 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
                 null, err, null
             ))
         }
-        return res.status(500).send({
-            data: null,
-            error: {
+        return res.status(500).send(new ResponseWrapper(
+            null, {
                 message: err.message || err,
                 code: 500,
                 status: "err.unhandledException"
-            }, 
-            pagination: null
-        })
+            }, null
+        ))
     }
 })
 

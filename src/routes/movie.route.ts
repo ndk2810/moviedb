@@ -12,13 +12,13 @@ import { addMedia, addMovie, addMovieGenre, deleteMovie, deleteMovieGenre, getLi
 import { authorizeToken } from "../helpers/token";
 
 router.get('/getList', getList)
-router.post('/add', posterUpload.single('poster'), addMovie)
-router.patch('/update', updateMovie)
-router.patch('/updatePoster', posterUpload.single('poster'), updateMoviePoster)
-router.post('/addMedia', upload.array('media'), addMedia)
-router.delete('/delete', deleteMovie)
-router.delete('/deleteGenre', deleteMovieGenre),
-router.post('addGenre', addMovieGenre)
+router.post('/add', authorizeToken, posterUpload.single('poster'), addMovie)
+router.patch('/update', authorizeToken, updateMovie)
+router.patch('/updatePoster', authorizeToken, posterUpload.single('poster'), updateMoviePoster)
+router.post('/addMedia', authorizeToken, upload.array('media'), addMedia)
+router.delete('/delete', authorizeToken, deleteMovie)
+router.delete('/deleteGenre', authorizeToken, deleteMovieGenre)
+router.post('addGenre', authorizeToken, addMovieGenre)
 router.get('/search', searchMovie)
 router.get('/searchByActor', searchMovieByActor)
 
