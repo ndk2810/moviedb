@@ -12,7 +12,7 @@ export class ErrorWrapper {
 }
 
 export const Errors = {
-    MISSING_TOKEN: new ErrorWrapper("No token found", 400, "error.noToken"),
+    MISSING_TOKEN: new ErrorWrapper("No token found", 401, "error.noToken"),
     MISSING_ID: new ErrorWrapper("Request is missing the required 'id'(s) property", 422, "error.missingID"),
     MISSING_FILE: new ErrorWrapper("Request is missing the file(s) to supposedly upload", 422, "error.missingFile"),
     MISSING_PROPERTIES: new ErrorWrapper("Request is missing the the required properties", 422, "error.missingProperties"),

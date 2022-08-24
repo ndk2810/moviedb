@@ -13,11 +13,11 @@ import { sendEmail } from "../helpers/email"
 import { MovieScore } from "../models/movie/movieScore.model"
 import { Errors } from "../helpers/wrappers/errorWrapper"
 
+const confirmMailQ = new Queue('confirm-mail', Constants.REDIS_CONNECTION);
+const worker = new Worker("confirm-mail", async job => { }, Constants.REDIS_CONNECTION);
+
 export const signUp: RequestHandler = async (req, res, next) => {
     try {
-        if (!req.body.email || !req.body.username || !req.body.password)
-            throw Errors.MISSING_PROPERTIES
-
         const data = {
             email: req.body.email,
             username: req.body.username,
@@ -32,7 +32,6 @@ export const signUp: RequestHandler = async (req, res, next) => {
         user.password = await encryptPassword(user.password)
         const savedUser = await user.save()
 
-        const confirmMailQ = new Queue('confirm-mail', Constants.REDIS_CONNECTION);
         const confirmToken = jwt.sign({ _id: savedUser.id.toString() }, process.env.ACCESS_TOKEN_SECRET)
 
         const msg = {
@@ -46,8 +45,6 @@ export const signUp: RequestHandler = async (req, res, next) => {
             removeOnComplete: 200,
             removeOnFail: 200
         })
-
-        const worker = new Worker("confirm-mail", async job => { }, Constants.REDIS_CONNECTION);
 
         return res.send(new ResponseWrapper(
             savedUser,
