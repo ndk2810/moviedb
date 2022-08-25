@@ -41,10 +41,12 @@ export const signUp: RequestHandler = async (req, res, next) => {
             text: 'Click this link to confirm your email: http://localhost:3000/user/confirm?id=' + confirmToken,
         }
 
-        await confirmMailQ.add('send-mail', await sendEmail(msg), {
+        await confirmMailQ.add('send-mail', sendEmail(msg), {
             removeOnComplete: 200,
             removeOnFail: 200
         })
+
+        savedUser.password = undefined
 
         return res.send(new ResponseWrapper(
             savedUser,
@@ -164,18 +166,18 @@ export const resetPassword: RequestHandler = async (req, res, next) => {
 
 export const rateMovie: RequestHandler = async (req, res, next) => {
     try {
-        if (!req.body.userId || !req.body.movieId)
+        if (!req.params.userId || !req.body.movieId)
             throw Errors.MISSING_ID
 
         const check = await MovieScore.findOne({
-            where: { userId: req.body.userId, movieId: req.body.movieId }
+            where: { userId: req.params.userId, movieId: req.body.movieId }
         })
 
         if (check)
             throw Errors.ALREADY_RATED
 
         const rateMovie = await MovieScore.create({
-            userId: req.body.userId,
+            userId: req.params.userId,
             movieId: req.body.movieId,
             score: req.body.score
         })
@@ -192,7 +194,7 @@ export const rateMovie: RequestHandler = async (req, res, next) => {
 export const deleteRating: RequestHandler = async (req, res, next) => {
     try {
         const check = await MovieScore.findOne({
-            where: { userId: req.body.userId, movieId: req.body.movieId }
+            where: { userId: req.params.userId, movieId: req.body.movieId }
         })
 
         if (!check)

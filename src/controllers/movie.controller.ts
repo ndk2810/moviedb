@@ -20,7 +20,7 @@ export const getMovie: RequestHandler = async (req, res, next) => {
         if (!id)
             throw Errors.MISSING_ID
 
-        const [updateScore, movie, movieActors, movieMedias, movieGenres] = await Promise.all([
+        const [updateScore, movie, actors, medias, genres] = await Promise.all([
             execProc("updateScore(:movieId)", { movieId: id }),
             Movie.findOne({ where: { id: id } }),
             MovieActor.findAll({ where: { movieId: id } }),
@@ -29,15 +29,15 @@ export const getMovie: RequestHandler = async (req, res, next) => {
         ])
 
         if (!movie)
-            throw "Movie doesn't exist"
+            throw Errors.NO_MOVIE
 
-        movieMedias.forEach(media => {
+        medias.forEach(media => {
             media.url = Constants.ASSETS + media.url
         })
         movie.poster = Constants.ASSETS + 'posters/' + movie.poster
 
         return res.send(new ResponseWrapper(
-            { movie, movieActors, movieMedias, movieGenres }, null, null
+            { movie, actors, medias, genres }, null, null
         ))
 
     } catch (error) {
@@ -94,11 +94,8 @@ export const addMovie: RequestHandler = async (req, res, next) => {
 
 export const updateMovie: RequestHandler = async (req, res, next) => {
     try {
-        if (!req.body.id)
-            throw Errors.MISSING_ID
-
         const movie = await Movie.findOne({
-            where: { id: req.body.id }
+            where: { id: req.params.id }
         })
 
         await movie.update({
@@ -120,7 +117,7 @@ export const updateMoviePoster: RequestHandler = async (req, res, next) => {
             throw Errors.MISSING_FILE
 
         const movie = await Movie.findOne({
-            where: { id: req.body.id }
+            where: { id: req.params.id }
         })
 
         await movie.update({
@@ -137,7 +134,7 @@ export const updateMoviePoster: RequestHandler = async (req, res, next) => {
 
 export const deleteMovie: RequestHandler = async (req, res, next) => {
     try {
-        const movieId = req.body.id
+        const movieId = req.params.id
 
         if (!movieId)
             throw Errors.MISSING_ID
@@ -227,11 +224,11 @@ export const searchMovieByActor: RequestHandler = async (req, res, next) => {
 
 export const addMedia: RequestHandler = async (req, res, next) => {
     try {
-        if (!req.body.movieId)
+        if (!req.params.movieId)
             throw Errors.MISSING_ID
 
         const files = req.files as Array<any>
-        const id = req.body.movieId
+        const id = req.params.movieId
 
         const medias = files.map(file => {
             return {
@@ -276,7 +273,8 @@ export const getList: RequestHandler = async (req, res, next) => {
 
 export const addMovieGenre: RequestHandler = async (req, res, next) => {
     try {
-        const { movieId, genreId } = req.body
+        const { genreId } = req.body
+        const movieId = req.params.id
 
         if (!movieId || !genreId)
             throw Errors.MISSING_ID
@@ -304,7 +302,7 @@ export const addMovieGenre: RequestHandler = async (req, res, next) => {
 
 export const deleteMovieGenre: RequestHandler = async (req, res, next) => {
     try {
-        const id = req.body.id
+        const id = req.params.id
 
         if (!id)
             throw Errors.MISSING_ID

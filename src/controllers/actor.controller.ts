@@ -51,11 +51,10 @@ export const addActor: RequestHandler = async (req, res, next) => {
 
 export const updateActor: RequestHandler = async (req, res, next) => {
     try {
-        if(!req.body.id)
-            throw Errors.MISSING_ID
+        const id = req.params.id
 
         const actor = await Actor.findOne({
-            where: { id: req.body.id }
+            where: { id: id }
         })
 
         await actor.update({
@@ -65,7 +64,7 @@ export const updateActor: RequestHandler = async (req, res, next) => {
         })
 
         return res.send(new ResponseWrapper(
-            actor, null, null
+            id, null, null
         ))
 
     } catch (error: any) {
@@ -77,12 +76,9 @@ export const updateActorPic: RequestHandler = async (req, res, next) => {
     try {
         if (req.file === null)
             throw Errors.MISSING_FILE
-      
-        if(!req.body.id)
-            throw Errors.MISSING_ID
 
         const actor = await Actor.findOne({
-            where: { id: req.body.id }
+            where: { id: req.params.id }
         })
 
         await actor.update({
@@ -99,7 +95,9 @@ export const updateActorPic: RequestHandler = async (req, res, next) => {
 
 export const addRole: RequestHandler = async (req, res, next) => {
     try {
-        const { movieId, actorId, role } = req.body
+        const { movieId, role } = req.body
+
+        const actorId = req.params.id
         
         if(!movieId || !actorId)
             throw Errors.MISSING_ID
@@ -128,7 +126,7 @@ export const addRole: RequestHandler = async (req, res, next) => {
 
 export const deleteRole: RequestHandler = async (req, res, next) => {
     try {
-        const id = req.body.id
+        const id = req.params.id
 
         if(!id)
             throw Errors.MISSING_ID
