@@ -11,6 +11,6 @@ router.post('/forgot', forgotPassword)
 router.patch('/reset', resetPassword)
 
 router.post('/:id/rate', authorizeToken, rateMovie)
-router.delete('/:id/delete-rating', authorizeToken, deleteRating)
+router.delete('/:id/rate', authorizeToken, deleteRating)
 
 export default router

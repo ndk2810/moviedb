@@ -12,9 +12,12 @@ import { Constants } from "../config/constants"
 import { sendEmail } from "../helpers/email"
 import { MovieScore } from "../models/movie/movieScore.model"
 import { Errors } from "../helpers/wrappers/errorWrapper"
+import { RateMovieDTO } from "../dtos/ratemovie.dto"
 
 const confirmMailQ = new Queue('confirm-mail', Constants.REDIS_CONNECTION);
-const worker = new Worker("confirm-mail", async job => { }, Constants.REDIS_CONNECTION);
+const resetMailQ = new Queue('reset-mail', Constants.REDIS_CONNECTION);
+const confirmMailWorker = new Worker("confirm-mail", async job => { }, Constants.REDIS_CONNECTION);
+const forgetPasswordWorker = new Worker('reset-mail', async job => { }, Constants.REDIS_CONNECTION)
 
 export const signUp: RequestHandler = async (req, res, next) => {
     try {
@@ -114,7 +117,6 @@ export const forgotPassword: RequestHandler = async (req, res, next) => {
         if (!user)
             throw Errors.NO_ACCOUNT
 
-        const resetMailQ = new Queue('reset-mail', Constants.REDIS_CONNECTION);
 
         const msg = {
             to: user.email,
@@ -123,12 +125,11 @@ export const forgotPassword: RequestHandler = async (req, res, next) => {
             text: 'Click this link to reset your password: <link to front end page to reset password here ?>',
         }
 
-        await resetMailQ.add('send-mail', await sendEmail(msg), {
+        await resetMailQ.add('reset-mail', sendEmail(msg), {
             removeOnComplete: 200,
             removeOnFail: 200
         })
 
-        const worker = new Worker('reset-mail', async job => { }, Constants.REDIS_CONNECTION)
 
         return res.send(new ResponseWrapper(
             "Reset email sent", null, null
@@ -141,7 +142,7 @@ export const forgotPassword: RequestHandler = async (req, res, next) => {
 
 export const resetPassword: RequestHandler = async (req, res, next) => {
     try {
-        if(!req.body.password || req.body.id)
+        if(!req.body.password || !req.body.id)
             throw Errors.MISSING_PROPERTIES
 
         const user = await User.findOne({
@@ -166,8 +167,14 @@ export const resetPassword: RequestHandler = async (req, res, next) => {
 
 export const rateMovie: RequestHandler = async (req, res, next) => {
     try {
-        if (!req.params.userId || !req.body.movieId)
-            throw Errors.MISSING_ID
+        const data = {
+            movieId: req.body.movieId,
+            userId: req.params.id,
+            score: req.body.score
+        }
+
+        const rateDTO: RateMovieDTO = plainToInstance(RateMovieDTO, data)
+        await validateDTO(rateDTO)
 
         const check = await MovieScore.findOne({
             where: { userId: req.params.userId, movieId: req.body.movieId }

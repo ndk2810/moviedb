@@ -1,7 +1,11 @@
+import { plainToInstance } from "class-transformer"
 import { RequestHandler } from "express"
 import { QueryTypes, Sequelize } from "sequelize"
 import { Constants } from "../config/constants"
 import { sequelize } from "../config/database"
+import { AddGenreToMovieDTO } from "../dtos/addmoviegenre.dto"
+import { UpdateMovieDTO } from "../dtos/updatemovie.dto"
+import { validateDTO } from "../dtos/validate"
 import { execProc } from "../helpers/procedure"
 import { Errors } from "../helpers/wrappers/errorWrapper"
 import { paginate } from "../helpers/wrappers/pagination"
@@ -47,9 +51,9 @@ export const getMovie: RequestHandler = async (req, res, next) => {
 
 export const addMovie: RequestHandler = async (req, res, next) => {
     try {
-        
-        if(!req.body.title || !req.body.overview || !req.file)
-            throw Errors.MISSING_PROPERTIES
+        if (!req.file)
+            throw Errors.MISSING_FILE
+
         const movie: Movie = await Movie.create({
             title: req.body.title,
             overview: req.body.overview,
@@ -94,6 +98,14 @@ export const addMovie: RequestHandler = async (req, res, next) => {
 
 export const updateMovie: RequestHandler = async (req, res, next) => {
     try {
+        const data = {
+            id: req.params.id,
+            title: req.body.title,
+        }
+
+        const updateMovieDTO: UpdateMovieDTO = plainToInstance(UpdateMovieDTO, data)
+        await validateDTO(updateMovieDTO)
+
         const movie = await Movie.findOne({
             where: { id: req.params.id }
         })
@@ -104,7 +116,7 @@ export const updateMovie: RequestHandler = async (req, res, next) => {
         })
 
         return res.send(new ResponseWrapper(
-            "Movie info updated", null, null
+            movie, null, null
         ))
     } catch (error) {
         next(error)
@@ -224,11 +236,15 @@ export const searchMovieByActor: RequestHandler = async (req, res, next) => {
 
 export const addMedia: RequestHandler = async (req, res, next) => {
     try {
-        if (!req.params.movieId)
-            throw Errors.MISSING_ID
-
         const files = req.files as Array<any>
         const id = req.params.movieId
+
+        const checkMovie = Movie.findOne({
+            where: { id: id }
+        })
+        
+        if(!checkMovie)
+            throw Errors.NO_MOVIE
 
         const medias = files.map(file => {
             return {
@@ -273,22 +289,24 @@ export const getList: RequestHandler = async (req, res, next) => {
 
 export const addMovieGenre: RequestHandler = async (req, res, next) => {
     try {
-        const { genreId } = req.body
-        const movieId = req.params.id
-
-        if (!movieId || !genreId)
-            throw Errors.MISSING_ID
+        const data = {
+            movieId: req.params.id,
+            genreId: req.body.genreId
+        }
+        
+        const addGenre: AddGenreToMovieDTO = plainToInstance(AddGenreToMovieDTO, data)
+        await validateDTO(addGenre)
 
         const checkGenre = await MovieGenre.findOne({
-            where: { movieId: movieId, genreId: genreId }
+            where: { movieId: data.movieId, genreId: data.genreId }
         })
 
         if (checkGenre)
             throw Errors.ALREADY_GENRED
 
         const addMovieGenre = await MovieGenre.create({
-            movieId: movieId,
-            genreId: genreId,
+            movieId: data.movieId,
+            genreId: data.genreId,
         })
 
         return res.send(new ResponseWrapper(
@@ -303,9 +321,6 @@ export const addMovieGenre: RequestHandler = async (req, res, next) => {
 export const deleteMovieGenre: RequestHandler = async (req, res, next) => {
     try {
         const id = req.params.id
-
-        if (!id)
-            throw Errors.MISSING_ID
 
         await MovieGenre.destroy({
             where: { id: id }

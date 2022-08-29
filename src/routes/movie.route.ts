@@ -16,12 +16,15 @@ router.post('/add', authorizeToken, posterUpload.single('poster'), addMovie)
 router.get('/search', searchMovie)
 router.get('/search-by-actor', searchMovieByActor)
 
-router.patch('/:id/update', authorizeToken, updateMovie)
-router.patch('/:id/update-poster', authorizeToken, posterUpload.single('poster'), updateMoviePoster)
-router.post('/:id/add-media', authorizeToken, upload.array('media'), addMedia)
-router.delete('/:id/delete', authorizeToken, deleteMovie)
-router.post('/:id/add-genre', authorizeToken, addMovieGenre)
-router.delete('/:id/delete-genre', authorizeToken, deleteMovieGenre)
+router.post('/:id/genre', authorizeToken, addMovieGenre)
+router.delete('/:id/genre', authorizeToken, deleteMovieGenre)
+
+router.post('/:id/media', authorizeToken, upload.array('media'), addMedia)
+
+router.patch('/:id', authorizeToken, updateMovie)
+router.patch('/:id/poster', authorizeToken, posterUpload.single('poster'), updateMoviePoster)
+router.delete('/:id', authorizeToken, deleteMovie)
+
 router.get('/:id', getMovie)
 
 export default router
