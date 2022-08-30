@@ -17,31 +17,81 @@ import { MovieGenre } from "../models/movie/movieGenre.model"
 import { MovieMedia } from "../models/movie/movieMedia.model"
 import { MovieScore } from "../models/movie/movieScore.model"
 
-export const getMovie: RequestHandler = async (req, res, next) => {
+export const getMovieInfo: RequestHandler = async (req, res, next) => {
     try {
         const id = req.params.id
 
         if (!id)
             throw Errors.MISSING_ID
 
-        const [updateScore, movie, actors, medias, genres] = await Promise.all([
+        const [updateScore, movie] = await Promise.all([
             execProc("updateScore(:movieId)", { movieId: id }),
             Movie.findOne({ where: { id: id } }),
-            MovieActor.findAll({ where: { movieId: id } }),
-            MovieMedia.findAll({ where: { movieId: id } }),
-            MovieGenre.findAll({ where: { movieId: id } }),
         ])
 
         if (!movie)
             throw Errors.NO_MOVIE
 
+        return res.send(new ResponseWrapper(
+            movie, null, null
+        ))
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const getMovieActors: RequestHandler = async (req, res, next) => {
+    try {
+        const movieId = req.params.id
+
+        if (!movieId)
+            throw Errors.MISSING_ID
+
+        const actors = await MovieActor.findAll({ where: { movieId: movieId } })
+
+        return res.send(new ResponseWrapper(
+            actors, null, null
+        ))
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const getMovieMedias: RequestHandler = async (req, res, next) => {
+    try {
+        const movieId = req.params.id
+
+        if (!movieId)
+            throw Errors.MISSING_ID
+
+        const medias = await MovieMedia.findAll({ where: { movieId: movieId } })
+
         medias.forEach(media => {
             media.url = Constants.ASSETS + media.url
         })
-        movie.poster = Constants.ASSETS + 'posters/' + movie.poster
 
         return res.send(new ResponseWrapper(
-            { movie, actors, medias, genres }, null, null
+            medias, null, null
+        ))
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const getMovieGenres: RequestHandler = async (req, res, next) => {
+    try {
+        const movieId = req.params.id
+
+        if (!movieId)
+            throw Errors.MISSING_ID
+
+        const genres = await MovieGenre.findAll({ where: { movieId: movieId } })
+
+        return res.send(new ResponseWrapper(
+            genres, null, null
         ))
 
     } catch (error) {
@@ -170,8 +220,8 @@ export const deleteMovie: RequestHandler = async (req, res, next) => {
 export const searchMovie: RequestHandler = async (req, res, next) => {
     try {
         const q = req.query.q
-        let limit: number = parseInt(req.query.limit as string) || 10
-        let offset: number = parseInt(req.query.offset as string) || 0
+        const limit = res.locals.limit
+        const offset = res.locals.offset
 
         if (!q)
             throw Errors.BLANK
@@ -197,8 +247,8 @@ export const searchMovie: RequestHandler = async (req, res, next) => {
 export const searchMovieByActor: RequestHandler = async (req, res, next) => {
     try {
         const actor = req.query.q
-        let limit: number = parseInt(req.query.limit as string) || 10
-        let offset: number = parseInt(req.query.offset as string) || 0
+        let limit: number = res.locals.limit
+        let offset: number = res.locals.offset
 
         if (!actor)
             throw Errors.BLANK
@@ -242,8 +292,8 @@ export const addMedia: RequestHandler = async (req, res, next) => {
         const checkMovie = Movie.findOne({
             where: { id: id }
         })
-        
-        if(!checkMovie)
+
+        if (!checkMovie)
             throw Errors.NO_MOVIE
 
         const medias = files.map(file => {
@@ -266,8 +316,8 @@ export const addMedia: RequestHandler = async (req, res, next) => {
 
 export const getList: RequestHandler = async (req, res, next) => {
     try {
-        let limit: number = parseInt(req.query.limit as string) || 10
-        let offset: number = parseInt(req.query.offset as string) || 0
+        let limit: number = res.locals.limit
+        let offset: number = res.locals.offset
         let sortBy = parseInt(req.query.sortby as string) === 0 ? 'score' : 'views'
 
         const mostViewedList = await Movie.findAndCountAll({
@@ -293,7 +343,7 @@ export const addMovieGenre: RequestHandler = async (req, res, next) => {
             movieId: req.params.id,
             genreId: req.body.genreId
         }
-        
+
         const addGenre: AddGenreToMovieDTO = plainToInstance(AddGenreToMovieDTO, data)
         await validateDTO(addGenre)
 
