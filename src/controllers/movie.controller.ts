@@ -15,7 +15,6 @@ import { Movie } from "../models/movie/movie.model"
 import { MovieActor } from "../models/movie/movieActor.model"
 import { MovieGenre } from "../models/movie/movieGenre.model"
 import { MovieMedia } from "../models/movie/movieMedia.model"
-import { MovieScore } from "../models/movie/movieScore.model"
 
 export const getMovieInfo: RequestHandler = async (req, res, next) => {
     try {
@@ -26,7 +25,7 @@ export const getMovieInfo: RequestHandler = async (req, res, next) => {
 
         const [updateScore, movie] = await Promise.all([
             execProc("updateScore(:movieId)", { movieId: id }),
-            Movie.findOne({ where: { id: id } }),
+            Movie.findOne({ where: { id: id, isDeleted: 0 } })
         ])
 
         if (!movie)
@@ -201,16 +200,42 @@ export const deleteMovie: RequestHandler = async (req, res, next) => {
         if (!movieId)
             throw Errors.MISSING_ID
 
-        await Promise.all([
-            Movie.destroy({ where: { id: movieId } }),
-            MovieActor.destroy({ where: { movieId: movieId } }),
-            MovieGenre.destroy({ where: { movieId: movieId } }),
-            MovieMedia.destroy({ where: { movieId: movieId } }),
-            MovieScore.destroy({ where: { movieId: movieId } })
-        ])
+        const movie = await Movie.findOne({
+            where: { id: movieId }
+        })
+
+        await movie.update({
+            isDeleted: 1
+        })
 
         return res.send(new ResponseWrapper(
-            "Movie deleted", null, null
+            "Movie moved to trash", null, null
+        ))
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const restoreMovie: RequestHandler = async (req, res, next) => {
+    try {
+        const movieId = req.params.id
+
+        if (!movieId)
+            throw Errors.MISSING_ID
+
+        const movie = await Movie.findOne({
+            where: { id: movieId, isDeleted: 1 }
+        })
+
+        if(!movie)
+            throw "Movie can't be found in trash"
+
+        await movie.update({
+            isDeleted: 0
+        })
+
+        return res.send(new ResponseWrapper(
+            "Movie restored", null, null
         ))
     } catch (error) {
         next(error)
@@ -323,6 +348,7 @@ export const getList: RequestHandler = async (req, res, next) => {
         const mostViewedList = await Movie.findAndCountAll({
             limit: limit,
             offset: offset,
+            where: { isDeleted: 0 },
             order: [[sortBy, 'DESC']]
         })
 

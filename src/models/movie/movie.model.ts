@@ -31,4 +31,8 @@ export class Movie extends Model {
     @Default(0)
     @Column
     views: number
+    
+    @Default(0)
+    @Column
+    isDeleted: number
 }

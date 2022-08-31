@@ -197,7 +197,6 @@ export const rateMovie: RequestHandler = async (req, res, next) => {
     }
 }
 
-
 export const deleteRating: RequestHandler = async (req, res, next) => {
     try {
         const check = await MovieScore.findOne({
