@@ -5,14 +5,14 @@ import { encryptPassword, comparePassword } from "../helpers/password"
 import { User } from "../models/user.model"
 import { ResponseWrapper } from "../helpers/wrappers/responseWrapper"
 import { validateDTO } from "../dtos/validate"
-import { SignUpDTO } from "../dtos/signup.dto"
+import { SignUpDTO } from "../dtos/signUp.dto"
 import { plainToInstance } from "class-transformer"
 import { Queue, Worker } from 'bullmq'
 import { Constants } from "../config/constants"
 import { sendEmail } from "../helpers/email"
 import { MovieScore } from "../models/movie/movieScore.model"
 import { Errors } from "../helpers/wrappers/errorWrapper"
-import { RateMovieDTO } from "../dtos/ratemovie.dto"
+import { RateMovieDTO } from "../dtos/rateMovie.dto"
 
 const confirmMailQ = new Queue('confirm-mail', Constants.REDIS_CONNECTION);
 const resetMailQ = new Queue('reset-mail', Constants.REDIS_CONNECTION);

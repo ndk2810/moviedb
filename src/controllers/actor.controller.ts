@@ -1,7 +1,7 @@
 import { plainToInstance } from "class-transformer"
 import { RequestHandler } from "express"
 import { Constants } from "../config/constants"
-import { AddRoleDTO } from "../dtos/addrole.dto"
+import { AddRoleDTO } from "../dtos/addRole.dto"
 import { validateDTO } from "../dtos/validate"
 import { Errors } from "../helpers/wrappers/errorWrapper"
 import { ResponseWrapper } from "../helpers/wrappers/responseWrapper"
