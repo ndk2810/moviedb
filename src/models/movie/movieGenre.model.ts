@@ -1,4 +1,4 @@
-import { Table, Column, Model, PrimaryKey, NotNull, AllowNull, AutoIncrement } from 'sequelize-typescript'
+import { Table, Column, Model, PrimaryKey, AllowNull, AutoIncrement, Default } from 'sequelize-typescript'
 
 @Table({
     timestamps: false
@@ -16,4 +16,8 @@ export class MovieGenre extends Model {
     @AllowNull(false)
     @Column
     genreId: number
+
+    @Default(0)
+    @Column
+    isDeleted: number
 }

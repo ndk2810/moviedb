@@ -1,4 +1,4 @@
-import { Table, Column, Model, PrimaryKey, NotNull, IsDecimal, AllowNull, AutoIncrement } from 'sequelize-typescript'
+import { Table, Column, Model, PrimaryKey, NotNull, IsDecimal, AllowNull, AutoIncrement, Default } from 'sequelize-typescript'
 
 @Table({
     timestamps: false,
@@ -22,4 +22,8 @@ export class MovieScore extends Model {
     @IsDecimal
     @Column
     score: number
+
+    @Default(0)
+    @Column
+    isDeleted: number
 }

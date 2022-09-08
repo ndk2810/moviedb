@@ -21,4 +21,8 @@ export class MovieMedia extends Model {
     @Default(0)
     @Column
     mediaType: number
+
+    @Default(0)
+    @Column
+    isDeleted: number
 }

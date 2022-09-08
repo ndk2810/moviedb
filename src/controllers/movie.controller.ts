@@ -1,6 +1,6 @@
 import { plainToInstance } from "class-transformer"
 import { RequestHandler } from "express"
-import { QueryTypes, Sequelize } from "sequelize"
+import { QueryTypes, Sequelize, where } from "sequelize"
 import { Constants } from "../config/constants"
 import { sequelize } from "../config/database"
 import { AddGenreToMovieDTO } from "../dtos/addMovieGenre.dto"
@@ -15,6 +15,7 @@ import { Movie } from "../models/movie/movie.model"
 import { MovieActor } from "../models/movie/movieActor.model"
 import { MovieGenre } from "../models/movie/movieGenre.model"
 import { MovieMedia } from "../models/movie/movieMedia.model"
+import { MovieScore } from "../models/movie/movieScore.model"
 
 export const getMovieInfo: RequestHandler = async (req, res, next) => {
     try {
@@ -25,7 +26,7 @@ export const getMovieInfo: RequestHandler = async (req, res, next) => {
 
         const [updateScore, movie] = await Promise.all([
             execProc("updateScore(:movieId)", { movieId: id }),
-            Movie.findOne({ where: { id: id, isDeleted: 0 } })
+            execProc("get_movie(:movieId)", { movieId: id }),
         ])
 
         if (!movie)
@@ -204,8 +205,30 @@ export const deleteMovie: RequestHandler = async (req, res, next) => {
             where: { id: movieId }
         })
 
-        await movie.update({
-            isDeleted: 1
+        await sequelize.transaction(async (t) => {
+            await movie.update({
+                isDeleted: 1
+            }, { transaction: t })
+
+            await MovieActor.update(
+                { isDeleted: 1 },
+                { where: { movieId: movieId }, transaction: t }
+            )
+
+            await MovieGenre.update(
+                { isDeleted: 1 },
+                { where: { movieId: movieId }, transaction: t }
+            )
+
+            await MovieMedia.update(
+                { isDeleted: 1 },
+                { where: { movieId: movieId }, transaction: t }
+            )
+
+            await MovieScore.update(
+                { isDeleted: 1 },
+                { where: { movieId: movieId }, transaction: t }
+            )
         })
 
         return res.send(new ResponseWrapper(
@@ -227,7 +250,7 @@ export const restoreMovie: RequestHandler = async (req, res, next) => {
             where: { id: movieId, isDeleted: 1 }
         })
 
-        if(!movie)
+        if (!movie)
             throw "Movie can't be found in trash"
 
         await movie.update({
