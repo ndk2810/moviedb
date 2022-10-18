@@ -1,7 +1,8 @@
 import jwt, { JwtPayload } from 'jsonwebtoken'
 import { Request, Response, NextFunction } from 'express'
-import * as redis from 'redis'
+import redis from 'redis'
 import { Errors } from './wrappers/errorWrapper'
+import { Constants } from '../config/constants'
 
 const redisClient = redis.createClient()
 redisClient.connect()

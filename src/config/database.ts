@@ -8,7 +8,7 @@ import { MovieMedia } from '../models/movie/movieMedia.model';
 import { MovieScore } from '../models/movie/movieScore.model';
 
 export const sequelize: Sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USERNAME, process.env.DB_PASSWORD, {
-  host: 'localhost',
+  host: process.env.DB_HOST,
   dialect: 'mysql',
   models: [User, Actor, Movie, MovieActor, MovieGenre, MovieMedia, MovieScore],
   logging: false,

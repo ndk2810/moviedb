@@ -2,7 +2,7 @@ import multer from "multer"
 
 export const Constants = {
   REDIS_CONNECTION: {
-    connection: { port: 6379, host: '127.0.0.1' }
+    connection: { port: 6379, host: 'moviedb.baywqv.ng.0001.use2.cache.amazonaws.com' }
   },
 
   POSTER_STORAGE: multer.diskStorage({
